@@ -33,6 +33,10 @@
 	.cell-preta {
 		background-color: #7c7a7a;
 	}
+
+	.cell-error {
+		background-color: red;
+	}
 	</style>
 	<script>
 	function allowDrop(ev) {
@@ -54,17 +58,26 @@
 	}
 
 	function verificarValidade(ev) {
-		var posicao = ev.target.id.replace("div","");
+		var posicao = parseInt(ev.target.id.replace("div",""));
 		console.log(posicao);
 		var indice = posicao/8;
 		
 		// horizontal para frente
-		var i = posicao+1;
-		console.log((i%8));
-		if((i%8) < 1) console.log($("#div"+i));
-		// for (var i = posicao+1; (i%8) < 1; i++) {
-		// 	console.log($("#div"+i));
-		// }
+		// var i = posicao + 1;
+		// console.log(i + '--');
+		// console.log((i%8));
+		for (var i = posicao + 1; (i%8) != 0; i++) {
+			//if ($("#div"+i).children(".queen"))
+			$("#div"+i).has(".queen").addClass("cell-error");
+		}
+		$("#div"+i).has(".queen").addClass("cell-error");
+		
+		// horizontal para trás
+		for (var i = posicao - 1; (i%8) > 1; i--) {
+			//if ($("#div"+i).children(".queen"))
+			$("#div"+i).has(".queen").addClass("cell-error");
+		}
+		$("#div"+i).has(".queen").addClass("cell-error");
 
 		// diagonal para frente
 		// for (var i = posicao + 9; (i/8) < 8; i+9) {
