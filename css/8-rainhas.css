@@ -1,0 +1,32 @@
+button {
+	margin-bottom: 10px;
+	border-radius: 5px;
+	padding: 5px;
+}
+
+.posicoes {
+    float: left;
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+    border: 1px solid black;
+    margin-bottom: -3px;
+}
+
+.queen {
+	width: 47px;
+    height: 44px;
+    background: url('queen.png') no-repeat left bottom scroll;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+}
+
+.cell-preta {
+	background-color: #7c7a7a;
+}
+
+.cell-error {
+	background-color: red;
+}
