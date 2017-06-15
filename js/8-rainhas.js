@@ -64,15 +64,18 @@
 
 	function addAtaca(add, cell){
 		var atacadas = $("#"+cell).attr('ataca');
-		atacadas +=  ',' + add ;	
-				
-		$("#"+cell).attr('ataca', atacadas);
+		atacadas = atacadas.split(",");
+		if($.inArray(''+add, atacadas) === -1) atacadas.push(add);
+		
+		$("#"+cell).attr('ataca', atacadas.join(","));
 	}
 
 	function verificaFilho(i, pai) {
 		if ($("#div"+i).children(".queen").length > 0) {
 			$("#div"+i).addClass("cell-error");
-			addAtaca(i, pai);
+			
+			if ($("#"+pai).children(".queen").length > 0) addAtaca(i, pai);
+			
 			addAtaca(pai.replace("div",""), "div"+i);
 			return 1;
 		} 
@@ -161,7 +164,11 @@
 			}
 		}
 
-		if (valida > 0)	$("#"+id).addClass("cell-error");
+		if (valida > 0)	{
+			$("#"+id).has(".queen").addClass("cell-error");
+		}
+
+		return valida;
 	}
 
 	function solucao() {
@@ -177,11 +184,16 @@
 			$("#" + arrayDiv[i]).append($(arrayDrag[i]));
 			$(arrayDrag[i]).attr("anterior", arrayDiv[i]);
 		}
+		
 		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
 	}
 
 	function recomecar() {
-		var arrayDiv = ['div1','div9','div17','div25','div33','div41','div49','div57'];
+		
+		$(".jogo").css("visibility", "visible");
+		$(".comecar").css("display","none");
+
+		var arrayDiv = ['div57','div58','div59','div60','div61','div62','div63','div64'];
 		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
 		
 		$(".posicoes").each(function(){
@@ -195,4 +207,54 @@
 		}
 
 		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
+	}
+	
+	function solucaoIA(){
+		//var arrayDiv = ['div2','div12','div22','div32','div35','div41','div55','div61'];
+		//var posicao = [57,58,59,60,61,62,63,64];
+		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
+		var arrayDiv = [];
+
+		$(".posicoes").each(function(){
+			var ataques = verificarValidade($(this).attr("id"));;
+			$(this).attr("ataques", ataques);
+		});
+
+		for (var i = arrayDrag.length - 1; i >= 0; i--) {
+			
+			var posicao = $(arrayDrag[i]).parent(".posicoes").attr("id");
+			posicao = parseInt(posicao.replace("div",""));
+			
+			var x = posicao + 8; 
+			var valor = $(arrayDrag[i]).parent(".posicoes").attr("ataques");
+			var pos = x;
+
+			// vertical para baixo
+			while (x < 65) {
+				console.log(x);
+				var ataque = $("#div"+x).attr("ataques");
+				if (valor > ataque) {
+					valor = ataque;
+					pos = x;
+				}
+				x += 8;
+			}
+			
+			// vertical para cima
+			var x = posicao - 8; 
+			while (x > 0) {
+
+				var ataque = parseInt($("#div"+x).attr("ataques"));
+				if (valor > ataque) {
+					valor = ataque;
+					pos = x;
+				}
+				x -= 8;
+			}
+			
+			$("#div" + pos).append($(arrayDrag[i]));
+			$(arrayDrag[i]).attr("anterior", pos);
+		}
+		
+		// for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
 	}

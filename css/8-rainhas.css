@@ -30,3 +30,7 @@ button {
 .cell-error {
 	background-color: red;
 }
+
+.jogo {
+    visibility: hidden;
+}
