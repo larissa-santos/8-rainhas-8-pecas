@@ -1,13 +1,17 @@
 	var cellAtual = null;
 
+	/* habilitar todas as celulas para soltar a rainha*/
 	function allowDrop(ev) {
 	    ev.preventDefault();
 	}
 
+	/* captura id da celula de destino da rainha*/
 	function drag(ev) {
 	    ev.dataTransfer.setData("text", ev.target.id);
 	}
 
+	/* Atualiza o atributo ataca da celulca $local, retirando o valor $remove 
+	* caso necessário, remove a class de alerta de erro */
 	function removeAtaca(remove, local){
 		var atacadas = $("#div"+local).attr('ataca');
 		var att = atacadas.split(",");
@@ -29,12 +33,13 @@
 		}
 	}
 
-	function atualizaAtacava(data){
-		var cellAnteiror = $("#"+data).attr("anterior");
+	/* percorre todas as rainhas que atacava anteriormente e atualiza os atributos ATACA das rainhas*/
+	function atualizaAtacava(rainha){
+		var cellAnteiror = $("#"+rainha).attr("anterior");
 	    var atacava = $("#"+cellAnteiror).attr("ataca");
 
+	    // atualiza celulas que eram atacadas na antiga posicao
 	    var indice = cellAnteiror.replace("div","");
-
 	    atacava = atacava.split(",");
 	    for (var i = atacava.length - 1; i >= 0; i--) {
 	    	if (parseInt(atacava[i]) > 0) {
@@ -42,11 +47,12 @@
 	    	}
 	    }
 
-	    // remove celulas que atacava e alerta de erro
+	    // atualiza celula anteior ocupada pela rainha, limpando o atributo ATACA e alerta de erro
 	    $("#"+cellAnteiror).attr("ataca",'');
 	    $("#"+cellAnteiror).removeClass("cell-error");
 	}
 
+	/* evento de transferencia de rainha*/
 	function drop(ev) {
 	    //ev.preventDefault();
 	    // id da rainha que esta sendo movida
@@ -62,6 +68,7 @@
 	    verificarValidade(ev.target.id);
 	}
 
+	/* Atualiza atributo ATACA no celular $cell, adicionando ataque a celula $add*/
 	function addAtaca(add, cell){
 		var atacadas = $("#"+cell).attr('ataca');
 		atacadas = atacadas.split(",");
@@ -70,18 +77,23 @@
 		$("#"+cell).attr('ataca', atacadas.join(","));
 	}
 
-	function verificaFilho(i, pai) {
-		if ($("#div"+i).children(".queen").length > 0) {
-			$("#div"+i).addClass("cell-error");
+	/* verifica se na posicao $cell tem uma rainha que ataca a posicao $cell2
+	* retorna 1 em caso d exitir uma rainha na posicao cell */
+	function verificaTemRainha(cell, cell2) {
+		if ($("#div"+cell).children(".queen").length > 0) {
+			$("#div"+cell).addClass("cell-error");
 			
-			if ($("#"+pai).children(".queen").length > 0) addAtaca(i, pai);
+			// se na posicao cell2 tbm tiver uma rainha, adiciona cell no atributo ATACA de cell2
+			if ($("#"+cell2).children(".queen").length > 0) addAtaca(cell, cell2);
 			
-			addAtaca(pai.replace("div",""), "div"+i);
+			addAtaca(cell2.replace("div",""), "div"+cell);
 			return 1;
 		} 
 		return 0;
 	}
 
+	/* verifica se existi alguma rainha na linha da ataque
+	* retorna a quantidade de ataques feitos */
 	function verificarValidade(id) {
 		var posicao = parseInt(id.replace("div",""));
 		var indice = posicao%8;
@@ -89,30 +101,30 @@
 
 		// horizontal para frente
 		for (var i = posicao + 1; (i%8) > 1; i++) {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 		}
 		if (indice !== 0) {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 		}
 		
 		// horizontal para trás
 		for (var i = posicao - 1; (i%8) > 1; i--) {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 		}
 		if (indice !== 1)  {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 		}
 		
 		// vertical para baixo
 		var i = posicao + 8; 
 		while (i < 65) {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 			i += 8;
 		}
 		// vertical para cima
 		var i = posicao - 8; 
 		while (i > 0) {
-			valida += verificaFilho(i, id);
+			valida += verificaTemRainha(i, id);
 			i -= 8;
 		}
 
@@ -120,11 +132,11 @@
 		if ((posicao%8) !== 0) {
 			var i = posicao + 9; 
 			while (i < 65 && (i%8) > 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 				i += 9;
 			}
 			if ((i%8) == 0) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 			}
 		}
 
@@ -132,11 +144,11 @@
 		var i = posicao - 9; 
 		if ((posicao%8) !== 1) {
 			while (i > 0 && (i%8) > 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 				i -= 9;
 			}
 			if ((i%8) == 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 			}
 		}
 
@@ -144,11 +156,11 @@
 		if ((posicao%8) !== 1) {
 			var i = posicao + 7; 
 			while (i < 64 && (i%8) > 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 				i += 7;
 			}
 			if (i < 64 && (i%8) == 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 			}
 		}
 		
@@ -156,11 +168,11 @@
 		var i = posicao - 7; 
 		if ((posicao%8) !== 0) {
 			while (i > 1 && (i%8) > 1) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 				i -= 7;
 			}
 			if (i > 1 && (i%8) == 0) {
-				valida += verificaFilho(i, id);
+				valida += verificaTemRainha(i, id);
 			}
 		}
 
@@ -171,45 +183,180 @@
 		return valida;
 	}
 
-	function solucao() {
-		var arrayDiv = ['div2','div12','div22','div32','div35','div41','div55','div61'];
-		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
-		
-		$(".posicoes").each(function(){
-			$(this).removeClass("cell-error");
-			$(this).attr("ataca","");
-		});
+//---------------------------
+var rainhas = [];	// vetor com as posições das rainhas no tabuleiro - o índice do vetor indica a coluna, e o valor a linha
+var passos;			// contador de passos até a solução
+var passosSemMudanca;	// há quantos passos não houve mudança no tabuleiro - para detectar situações de estagnação
+var anterior = [];	// estado anterior do tabuleiro - para detectar situações de estagnação
+var delay = 100;	// delay entre iterações
 
-		for (var i = arrayDiv.length - 1; i >= 0; i--) {
-			$("#" + arrayDiv[i]).append($(arrayDrag[i]));
-			$(arrayDrag[i]).attr("anterior", arrayDiv[i]);
-		}
-		
-		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
-	}
 
-	function recomecar() {
-		
+	/* Coloca o tabuleiro no estado inicial, com todas as rainhas na posição inferior*/
+	function recomecar() {		
 		$(".jogo").css("visibility", "visible");
 		$(".comecar").css("display","none");
 
-		var arrayDiv = ['div57','div58','div59','div60','div61','div62','div63','div64'];
-		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
+		//estado de inicializacao do tabuleiro
+		rainhas = ['57','58','59','60','61','62','63','64'];
 		
+		limpaConflitos();
+		exibeEstado();
+	}
+
+	/* solucao pronta */
+	function solucao() {
+		// estado final aceitavel
+		rainhas = ['2','12','22','32','35','41','55','61'];
+		
+		limpaConflitos();
+		exibeEstado();
+	}
+
+	/* Limpa todas as class de alerta de ataque e atributos ATACA*/
+	function limpaConflitos(){
 		$(".posicoes").each(function(){
 			$(this).removeClass("cell-error");
 			$(this).attr("ataca","");
 		});
+	}
 
-		for (var i = arrayDiv.length - 1; i >= 0; i--) {
-			$("#" + arrayDiv[i]).append($(arrayDrag[i]));
-			$(arrayDrag[i]).attr("anterior", arrayDiv[i]);
+	/* percorre todas as rainhas e retorna quantidade de ataques possiveis no tabuleiro*/
+	function checaAtaques(){
+		var total = 0;
+		for (var i = 1; i <= rainhas.length; i++) {
+			total += verificarValidade("div"+rainhas[i-1]);
 		}
 
-		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
+		return total;
+	}
+
+	/* retorna o valor encontrado no atributo ATAQUES, que expressa a qtd de conflitos com outras rainhas na posicao x*/
+	function getAttrAtaques(x){
+		return $("#div" + x).attr("ataques");
+	}
+
+	/* atualiza tabuleiro na tela - retorna o número de conflitos*/
+	function exibeEstado() {
+		
+		// muda posicao das rainhas
+		for (var i = 1; i <= rainhas.length; i++) {
+			$("#div" + rainhas[i-1]).append($("#drag" + i));
+			$("#drag" + i).attr("anterior", rainhas[i-1]);
+		}
+		
+		// atualiza variaveis de ataques das posicoes
+		$(".posicoes").each(function(){
+			var ataques = verificarValidade($(this).attr("id"));;
+			$(this).attr("ataques", ataques);
+		});
+
+		return checaAtaques();
+	}
+
+	/* funções auxiliares */
+	function copiaEstado(estado) {	// retorna uma cópia do estado
+		var retorno = [];
+		for (var i = 0; i < estado.length; i++)	// copia elementos do array
+			retorno[i] = estado[i];					// necessário para evitar a cópia por referência
+	    
+		return retorno;
+	}
+
+	function comparaEstados(estado1,estado2) {	// compara estados
+		for (var i=0; i<estado1.length; i++)
+			if (estado1[i] != estado2[i])
+				return false;
+					
+		return true;
+	}
+
+	/*inicializacao de variaveis para a busca iterativa da solucao*/
+	function solucaoIA() {
+		// nome das divs q representam as rainhas
+		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
+
+		// percorre todas as rainhas para encontrar o estado atual
+		for (var i = arrayDrag.length - 1; i >= 0; i--) {		
+			var posicao = $(arrayDrag[i]).parent(".posicoes").attr("id");
+			posicao = parseInt(posicao.replace("div",""));
+			
+			// armazena estado atual
+			rainhas[i] = posicao;
+		}
+					
+		passos = 0;
+		passosSemMudanca = 0;
+		anterior = [];
+		melhoraIterativa(0);	// inicia o algoritmo de melhora iterativa, a partir da primeira coluna
 	}
 	
-	function solucaoIA(){
+	/* a busca tenta minimizar o número de conflitos com a rainha i */
+	function melhoraIterativa(i) {
+console.log("Passos:"+ passos);
+console.log("Passos sem mudança:"+passosSemMudanca);
+console.log("estado Ant:"+ anterior);
+console.log(i);
+
+		var min;	// número mínimo de conflitos
+		var opcoes = [];	// array das posições com mínimo de conflitos
+		var conflitos, y;
+		
+		limpaConflitos();	// limpa nº de conflitos das células
+		
+		if (i == 0)	{
+		// 	document.getElementById("info").innerHTML = "";	// limpa a área de informação sempre que reinicia da coluna 0
+			if (passosSemMudanca > 24){	// cinco ciclos sem alterar o tabuleiro - possível estado de estagnação
+				if (confirm("Possível estagnação detectada!\n\nReiniciar usando o estado inicial?")) {
+					recomecar();	// limpa tabuleiro
+					solucaoIA(); // reinicia busca pela solucao
+					return;
+				} else {
+					passosSemMudanca = 0;	// continua tentando resolver
+				}
+			}
+		}
+
+		if (exibeEstado()) {	// atualiza tabuleiro na tela - prossegue se ainda houver conflitos
+			passos++;
+			// // document.getElementById("passos").innerHTML = passos;
+			// // document.getElementById("info").innerHTML += "Checando coluna "+i;
+			conflitos = getAttrAtaques(rainhas[i]);
+
+			min = conflitos;		// inicializa número mínimo de conflitos
+			opcoes = [rainhas[i]];	// inicializa lista de opções com a posição atual
+			for (y = 0; y < 8; y++) {
+				var pos = i * 8 + (y + 1);
+				rainhas[i] = pos;
+				
+				conflitos = getAttrAtaques(rainhas[i]);
+				if (conflitos < min) {	// se achou um menor número de conflitos
+					min = conflitos;	// atualiza mínimo
+					opcoes = [pos];		// reinicializa lista de opções com essa posição
+				} else if (conflitos == min) {	// se essa posição tem o número mínimo de conflitos
+					opcoes.push(pos);			// adiciona à lista de opções
+				}
+			}
+			y = Math.floor(Math.random()*opcoes.length); // escolhe uma das posições que tem o mínimo de conflitos
+			rainhas[i] = opcoes[y];	// reposiciona rainha desta coluna
+
+			if (comparaEstados(rainhas,anterior))	// verifica se houve mudança no tabuleiro
+				passosSemMudanca++;
+			else {
+				anterior = copiaEstado(rainhas);
+				passosSemMudanca = 0;
+			}
+			
+			exibeEstado();	// exibe tabuleiro atualizado
+			i = (i<7)?i+1:0;	// próxima coluna
+			window.setTimeout(function() { melhoraIterativa(i) }, 2000);  // nova iteração em n milissegundos
+		} else {	// se não há conflitos no tabuleiro, encontrou uma solução!
+			
+			alert("Solução encontrada!");
+			limpaConflitos();
+		}
+	}
+
+	function solucaoIA2(){
 		//var arrayDiv = ['div2','div12','div22','div32','div35','div41','div55','div61'];
 		//var posicao = [57,58,59,60,61,62,63,64];
 		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
@@ -220,6 +367,7 @@
 			$(this).attr("ataques", ataques);
 		});
 
+		// percorre todas as rainhas
 		for (var i = arrayDrag.length - 1; i >= 0; i--) {
 			
 			var posicao = $(arrayDrag[i]).parent(".posicoes").attr("id");
@@ -227,15 +375,16 @@
 			
 			var x = posicao + 8; 
 			var valor = $(arrayDrag[i]).parent(".posicoes").attr("ataques");
-			var pos = x;
+			var pos = ["div" + x];
 
 			// vertical para baixo
 			while (x < 65) {
-				console.log(x);
 				var ataque = $("#div"+x).attr("ataques");
 				if (valor > ataque) {
 					valor = ataque;
-					pos = x;
+					pos = ["div" + x];
+				} else if (valor == ataque) {
+					pos.push("div"+x);
 				}
 				x += 8;
 			}
@@ -247,14 +396,22 @@
 				var ataque = parseInt($("#div"+x).attr("ataques"));
 				if (valor > ataque) {
 					valor = ataque;
-					pos = x;
+					pos = ["div" + x];
+				} else if (valor == ataque) {
+					pos.push("div"+x);
 				}
 				x -= 8;
 			}
 			
-			$("#div" + pos).append($(arrayDrag[i]));
-			$(arrayDrag[i]).attr("anterior", pos);
+			var y = Math.floor(Math.random()*pos.length);
+			arrayDiv[i] = pos[y]; // escolhe umas posicao aleatoria das possibilidades de menor ataques da coluna
+			
+		    atualizaAtacava(arrayDrag[i].replace("#",""));
+		    
+			$("#" + pos[y]).append($(arrayDrag[i]));
+			$(arrayDrag[i]).attr("anterior", pos[y]);
 		}
 		
-		// for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
+		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
+
 	}
