@@ -1,5 +1,10 @@
 	var cellAtual = null;
 
+	var rainhas = [];	// vetor com as posições das rainhas no tabuleiro - o índice do vetor indica a coluna, e o valor a linha
+	var passos;			// contador de passos até a solução
+	var passosSemMudanca;	// há quantos passos não houve mudança no tabuleiro - para detectar situações de estagnação
+	var anterior = [];	// estado anterior do tabuleiro - para detectar situações de estagnação
+
 	/* habilitar todas as celulas para soltar a rainha*/
 	function allowDrop(ev) {
 	    ev.preventDefault();
@@ -35,35 +40,40 @@
 
 	/* percorre todas as rainhas que atacava anteriormente e atualiza os atributos ATACA das rainhas*/
 	function atualizaAtacava(rainha){
-		var cellAnteiror = $("#"+rainha).attr("anterior");
-	    var atacava = $("#"+cellAnteiror).attr("ataca");
+	    var atacava = $("#div"+anterior[rainha-1]).attr("ataca");
 
 	    // atualiza celulas que eram atacadas na antiga posicao
-	    var indice = cellAnteiror.replace("div","");
 	    atacava = atacava.split(",");
 	    for (var i = atacava.length - 1; i >= 0; i--) {
 	    	if (parseInt(atacava[i]) > 0) {
-	    		removeAtaca(indice, atacava[i]);
+	    		removeAtaca(anterior[rainha-1], atacava[i]);
 	    	}
 	    }
 
 	    // atualiza celula anteior ocupada pela rainha, limpando o atributo ATACA e alerta de erro
-	    $("#"+cellAnteiror).attr("ataca",'');
-	    $("#"+cellAnteiror).removeClass("cell-error");
+	    $("#div"+anterior[rainha-1]).attr("ataca",'');
+	    $("#div"+anterior[rainha-1]).removeClass("cell-error");
 	}
 
 	/* evento de transferencia de rainha*/
 	function drop(ev) {
 	    //ev.preventDefault();
 	    // id da rainha que esta sendo movida
-	    var data = ev.dataTransfer.getData("text");
+	    var rainha = ev.dataTransfer.getData("text");
 	    // transferindo rainha de lugar
-	    ev.target.appendChild(document.getElementById(data));
+	    ev.target.appendChild(document.getElementById(rainha));
 	    
-	    atualizaAtacava(data);
+	    // salvando estado anterior
+	    anterior = copiaEstado(rainhas);
+
+	    rainha = rainha.replace("drag","");
+	    atualizaAtacava(rainha);
 	    
 	    var cellAtual = ev.target.id;
-	    $("#"+data).attr("anterior", cellAtual);
+	    // $("#drag"+rainha).attr("anterior", cellAtual);
+	    
+	    // atualiza estado
+	    rainhas[rainha-1] = cellAtual.replace("div","");
 
 	    verificarValidade(ev.target.id);
 	}
@@ -79,14 +89,14 @@
 
 	/* verifica se na posicao $cell tem uma rainha que ataca a posicao $cell2
 	* retorna 1 em caso d exitir uma rainha na posicao cell */
-	function verificaTemRainha(cell, cell2) {
-		if ($("#div"+cell).children(".queen").length > 0) {
-			$("#div"+cell).addClass("cell-error");
+	function verificaTemRainha(cell1, cell2) {
+		if ($("#div"+cell1).children(".queen").length > 0) {
+			$("#div"+cell1).addClass("cell-error");
 			
 			// se na posicao cell2 tbm tiver uma rainha, adiciona cell no atributo ATACA de cell2
-			if ($("#"+cell2).children(".queen").length > 0) addAtaca(cell, cell2);
+			if ($("#"+cell2).children(".queen").length > 0) addAtaca(cell1, cell2);
 			
-			addAtaca(cell2.replace("div",""), "div"+cell);
+			addAtaca(cell2.replace("div",""), "div"+cell1);
 			return 1;
 		} 
 		return 0;
@@ -177,19 +187,14 @@
 		}
 
 		if (valida > 0)	{
-			$("#"+id).has(".queen").addClass("cell-error");
+			if ($("#"+id).children(".queen").length > 0 ) $("#"+id).addClass("cell-error");
+			else $("#"+id).removeClass("cell-error");
+		} else {
+
 		}
 
 		return valida;
 	}
-
-//---------------------------
-var rainhas = [];	// vetor com as posições das rainhas no tabuleiro - o índice do vetor indica a coluna, e o valor a linha
-var passos;			// contador de passos até a solução
-var passosSemMudanca;	// há quantos passos não houve mudança no tabuleiro - para detectar situações de estagnação
-var anterior = [];	// estado anterior do tabuleiro - para detectar situações de estagnação
-var delay = 100;	// delay entre iterações
-
 
 	/* Coloca o tabuleiro no estado inicial, com todas as rainhas na posição inferior*/
 	function recomecar() {		
@@ -197,7 +202,8 @@ var delay = 100;	// delay entre iterações
 		$(".comecar").css("display","none");
 
 		//estado de inicializacao do tabuleiro
-		rainhas = ['57','58','59','60','61','62','63','64'];
+		rainhas = ['1','9','17','25','33','41','49','57'];
+		anterior = ['1','9','17','25','33','41','49','57'];
 		
 		limpaConflitos();
 		exibeEstado();
@@ -221,7 +227,7 @@ var delay = 100;	// delay entre iterações
 	}
 
 	/* percorre todas as rainhas e retorna quantidade de ataques possiveis no tabuleiro*/
-	function checaAtaques(){
+	function getTotalAtaques(){
 		var total = 0;
 		for (var i = 1; i <= rainhas.length; i++) {
 			total += verificarValidade("div"+rainhas[i-1]);
@@ -240,8 +246,10 @@ var delay = 100;	// delay entre iterações
 		
 		// muda posicao das rainhas
 		for (var i = 1; i <= rainhas.length; i++) {
+
 			$("#div" + rainhas[i-1]).append($("#drag" + i));
-			$("#drag" + i).attr("anterior", rainhas[i-1]);
+			// $("#drag" + i).attr("anterior", "div"+rainhas[i-1]);
+			atualizaAtacava(i);
 		}
 		
 		// atualiza variaveis de ataques das posicoes
@@ -250,7 +258,7 @@ var delay = 100;	// delay entre iterações
 			$(this).attr("ataques", ataques);
 		});
 
-		return checaAtaques();
+		return getTotalAtaques();
 	}
 
 	/* funções auxiliares */
@@ -296,6 +304,7 @@ console.log("Passos:"+ passos);
 console.log("Passos sem mudança:"+passosSemMudanca);
 console.log("estado Ant:"+ anterior);
 console.log(i);
+console.log("rainhas" + rainhas);
 
 		var min;	// número mínimo de conflitos
 		var opcoes = [];	// array das posições com mínimo de conflitos
@@ -312,6 +321,7 @@ console.log(i);
 					return;
 				} else {
 					passosSemMudanca = 0;	// continua tentando resolver
+					return; // finaliza busca por solucao
 				}
 			}
 		}
@@ -324,11 +334,11 @@ console.log(i);
 
 			min = conflitos;		// inicializa número mínimo de conflitos
 			opcoes = [rainhas[i]];	// inicializa lista de opções com a posição atual
+			// percorre todas as celulas da linha i 
 			for (y = 0; y < 8; y++) {
 				var pos = i * 8 + (y + 1);
-				rainhas[i] = pos;
-				
-				conflitos = getAttrAtaques(rainhas[i]);
+				console.log("--" + pos);
+				conflitos = getAttrAtaques(pos);
 				if (conflitos < min) {	// se achou um menor número de conflitos
 					min = conflitos;	// atualiza mínimo
 					opcoes = [pos];		// reinicializa lista de opções com essa posição
@@ -337,7 +347,7 @@ console.log(i);
 				}
 			}
 			y = Math.floor(Math.random()*opcoes.length); // escolhe uma das posições que tem o mínimo de conflitos
-			rainhas[i] = opcoes[y];	// reposiciona rainha desta coluna
+			rainhas[i] = opcoes[y];	// reposiciona rainha desta linha
 
 			if (comparaEstados(rainhas,anterior))	// verifica se houve mudança no tabuleiro
 				passosSemMudanca++;
