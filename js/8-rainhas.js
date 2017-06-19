@@ -1,8 +1,8 @@
 	var parar = false; // variavel usada para decidir verificacao da linha
-	var rainhas = [];	// vetor com as posiÃ§Ãµes das rainhas no tabuleiro - o Ã­ndice do vetor indica a coluna, e o valor a linha
-	var passos;			// contador de passos atÃ© a soluÃ§Ã£o
-	var passosSemMudanca;	// hÃ¡ quantos passos nÃ£o houve mudanÃ§a no tabuleiro - para detectar situaÃ§Ãµes de estagnaÃ§Ã£o
-	var anterior = [];	// estado anterior do tabuleiro - para detectar situaÃ§Ãµes de estagnaÃ§Ã£o
+	var rainhas = [];	// vetor com as posições das rainhas no tabuleiro - o índice do vetor indica a coluna, e o valor a linha
+	var passos;			// contador de passos até a solução
+	var passosSemMudanca;	// há quantos passos não houve mudança no tabuleiro - para detectar situações de estagnação
+	var anterior = [];	// estado anterior do tabuleiro - para detectar situações de estagnação
 
 	/* habilitar todas as celulas para soltar a rainha*/
 	function allowDrop(ev) {
@@ -15,7 +15,7 @@
 	}
 
 	/* Atualiza o atributo ataca da celulca $local, retirando o valor $remove 
-	* caso necessÃ¡rio, remove a class de alerta de erro */
+	* caso necessário, remove a class de alerta de erro */
 	function removeAtaca(remove, local){
 		var atacadas = $("#div"+local).attr('ataca');
 		var att = atacadas.split(",");
@@ -118,7 +118,7 @@
 				valida += verificaTemRainha(i, id);
 			}
 			
-			// horizontal para trÃ¡s
+			// horizontal para trás
 			for (var i = posicao - 1; (i%8) > 1; i--) {
 				valida += verificaTemRainha(i, id);
 			}
@@ -198,7 +198,7 @@
 		return valida;
 	}
 
-	/* Coloca o tabuleiro no estado inicial, com todas as rainhas na posiÃ§Ã£o inferior*/
+	/* Coloca o tabuleiro no estado inicial, com todas as rainhas na posição inferior*/
 	function recomecar() {		
 		$(".jogo").css("visibility", "visible");
 		$(".comecar").css("display","none");
@@ -243,7 +243,7 @@
 		return $("#div" + x).attr("ataques");
 	}
 
-	/* atualiza tabuleiro na tela - retorna o nÃºmero de conflitos*/
+	/* atualiza tabuleiro na tela - retorna o número de conflitos*/
 	function exibeEstado() {
 		// muda posicao das rainhas
 		for (var i = 1; i <= rainhas.length; i++) {
@@ -262,11 +262,11 @@
 		return getTotalAtaques();
 	}
 
-	/* funÃ§Ãµes auxiliares */
-	function copiaEstado(estado) {	// retorna uma cÃ³pia do estado
+	/* funções auxiliares */
+	function copiaEstado(estado) {	// retorna uma cópia do estado
 		var retorno = [];
 		for (var i = 0; i < estado.length; i++)	// copia elementos do array
-			retorno[i] = estado[i];					// necessÃ¡rio para evitar a cÃ³pia por referÃªncia
+			retorno[i] = estado[i];					// necessário para evitar a cópia por referência
 	    
 		return retorno;
 	}
@@ -302,23 +302,23 @@
 		melhoraIterativa(0);	// inicia o algoritmo de melhora iterativa, a partir da primeira coluna
 	}
 	
-	/* a busca tenta minimizar o nÃºmero de conflitos com a rainha i */
+	/* a busca tenta minimizar o número de conflitos com a rainha i */
 	function melhoraIterativa(i) {
 console.log("Passos:"+ passos);
-console.log("Passos sem mudanÃ§a:"+passosSemMudanca);
+console.log("Passos sem mudança:"+passosSemMudanca);
 console.log("estado Ant:"+ anterior);
 console.log(i);
 console.log("rainhas: " + rainhas);
 
-		var min;	// nÃºmero mÃ­nimo de conflitos
-		var opcoes = [];	// array das posiÃ§Ãµes com mÃ­nimo de conflitos
+		var min;	// número mínimo de conflitos
+		var opcoes = [];	// array das posições com mínimo de conflitos
 		var conflitos, y;
 		
-		limpaConflitos();	// limpa nÂº de conflitos das cÃ©lulas
+		limpaConflitos();	// limpa nº de conflitos das células
 		
 		if (i == 0)	{
-			if (passosSemMudanca > 24){	// cinco ciclos sem alterar o tabuleiro - possÃ­vel estado de estagnaÃ§Ã£o
-				if (confirm("PossÃ­vel estagnaÃ§Ã£o detectada!\n\nReiniciar usando o estado inicial?")) {
+			if (passosSemMudanca > 24){	// cinco ciclos sem alterar o tabuleiro - possível estado de estagnação
+				if (confirm("Possível estagnação detectada!\n\nReiniciar usando o estado inicial?")) {
 					recomecar();	// limpa tabuleiro
 					solucaoIA(); // reinicia busca pela solucao
 					return;
@@ -333,24 +333,24 @@ console.log("rainhas: " + rainhas);
 			passos++;
 			conflitos = getAttrAtaques(rainhas[i]);
 
-			min = conflitos;		// inicializa nÃºmero mÃ­nimo de conflitos
-			opcoes = [];	// inicializa lista de opÃ§Ãµes com a posiÃ§Ã£o atual
+			min = conflitos;		// inicializa número mínimo de conflitos
+			opcoes = [];	// inicializa lista de opções com a posição atual
 			// percorre todas as celulas da linha i 
 			for (y = 0; y < 8; y++) {
 				var pos = i * 8 + (y + 1);
 				conflitos = getAttrAtaques(pos);
-				if (conflitos < min) {	// se achou um menor nÃºmero de conflitos
-					min = conflitos;	// atualiza mÃ­nimo
-					opcoes = [pos];		// reinicializa lista de opÃ§Ãµes com essa posiÃ§Ã£o
-				} else if (conflitos == min) {	// se essa posiÃ§Ã£o tem o nÃºmero mÃ­nimo de conflitos
-					opcoes.push(pos);			// adiciona Ã  lista de opÃ§Ãµes
+				if (conflitos < min) {	// se achou um menor número de conflitos
+					min = conflitos;	// atualiza mínimo
+					opcoes = [pos];		// reinicializa lista de opções com essa posição
+				} else if (conflitos == min) {	// se essa posição tem o número mínimo de conflitos
+					opcoes.push(pos);			// adiciona à lista de opções
 				}
 			}
 			console.log(opcoes);
-			y = Math.floor(Math.random()*opcoes.length); // escolhe uma das posiÃ§Ãµes que tem o mÃ­nimo de conflitos
+			y = Math.floor(Math.random()*opcoes.length); // escolhe uma das posições que tem o mínimo de conflitos
 			rainhas[i] = opcoes[y];	// reposiciona rainha desta linha
 
-			if (comparaEstados(rainhas,anterior)) {	// verifica se houve mudanÃ§a no tabuleiro
+			if (comparaEstados(rainhas,anterior)) {	// verifica se houve mudança no tabuleiro
 				passosSemMudanca++;
 			} else {
 				anterior = copiaEstado(rainhas);
@@ -359,13 +359,13 @@ console.log("rainhas: " + rainhas);
 			
 			exibeEstado();	// exibe tabuleiro atualizado
 			
-			i = (i<7) ? i+1 : 0;	// prÃ³xima coluna
+			i = (i<7) ? i+1 : 0;	// próxima coluna
 			window.setTimeout(function() { 
 				if (!parar)	melhoraIterativa(i) 
-			}, 2000);  // nova iteraÃ§Ã£o em n milissegundos
+			}, 2000);  // nova iteração em n milissegundos
 		} else {	
-			// se nÃ£o hÃ¡ conflitos no tabuleiro, encontrou uma soluÃ§Ã£o!
-			alert("SoluÃ§Ã£o encontrada, com "+passos+" passos");
+			// se não há conflitos no tabuleiro, encontrou uma solução!
+			alert("Solução encontrada, com "+passos+" passos");
 			limpaConflitos();
 		}
 	}
