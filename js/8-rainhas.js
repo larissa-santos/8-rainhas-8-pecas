@@ -334,7 +334,7 @@ console.log("rainhas: " + rainhas);
 			conflitos = getAttrAtaques(rainhas[i]);
 
 			min = conflitos;		// inicializa número mínimo de conflitos
-			opcoes = [rainhas[i]];	// inicializa lista de opções com a posição atual
+			opcoes = [];	// inicializa lista de opções com a posição atual
 			// percorre todas as celulas da linha i 
 			for (y = 0; y < 8; y++) {
 				var pos = i * 8 + (y + 1);
