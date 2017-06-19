@@ -1,5 +1,4 @@
-	var cellAtual = null;
-
+	var parar = false; // variavel usada para decidir verificacao da linha
 	var rainhas = [];	// vetor com as posições das rainhas no tabuleiro - o índice do vetor indica a coluna, e o valor a linha
 	var passos;			// contador de passos até a solução
 	var passosSemMudanca;	// há quantos passos não houve mudança no tabuleiro - para detectar situações de estagnação
@@ -75,7 +74,7 @@
 	    // atualiza estado
 	    rainhas[rainha-1] = cellAtual.replace("div","");
 
-	    verificarValidade(ev.target.id);
+	    verificarValidade(ev.target.id, true);
 	}
 
 	/* Atualiza atributo ATACA no celular $cell, adicionando ataque a celula $add*/
@@ -102,27 +101,30 @@
 		return 0;
 	}
 
-	/* verifica se existi alguma rainha na linha da ataque
+	/* verifica se existi alguma rainha nas linhas de ataque
+	* o parametro verificaH, define de o algoritmo deve verificar as celulas da linha horizontal referente a div id
 	* retorna a quantidade de ataques feitos */
-	function verificarValidade(id) {
+	function verificarValidade(id, verificaH) {
 		var posicao = parseInt(id.replace("div",""));
 		var indice = posicao%8;
 		var valida = 0;		
 
-		// horizontal para frente
-		for (var i = posicao + 1; (i%8) > 1; i++) {
-			valida += verificaTemRainha(i, id);
-		}
-		if (indice !== 0) {
-			valida += verificaTemRainha(i, id);
-		}
-		
-		// horizontal para trás
-		for (var i = posicao - 1; (i%8) > 1; i--) {
-			valida += verificaTemRainha(i, id);
-		}
-		if (indice !== 1)  {
-			valida += verificaTemRainha(i, id);
+		if (verificaH) {
+			// horizontal para frente
+			for (var i = posicao + 1; (i%8) > 1; i++) {
+				valida += verificaTemRainha(i, id);
+			}
+			if (indice !== 0) {
+				valida += verificaTemRainha(i, id);
+			}
+			
+			// horizontal para trás
+			for (var i = posicao - 1; (i%8) > 1; i--) {
+				valida += verificaTemRainha(i, id);
+			}
+			if (indice !== 1)  {
+				valida += verificaTemRainha(i, id);
+			}
 		}
 		
 		// vertical para baixo
@@ -190,7 +192,7 @@
 			if ($("#"+id).children(".queen").length > 0 ) $("#"+id).addClass("cell-error");
 			else $("#"+id).removeClass("cell-error");
 		} else {
-
+			$("#"+id).removeClass("cell-error");
 		}
 
 		return valida;
@@ -230,7 +232,7 @@
 	function getTotalAtaques(){
 		var total = 0;
 		for (var i = 1; i <= rainhas.length; i++) {
-			total += verificarValidade("div"+rainhas[i-1]);
+			total += verificarValidade("div"+rainhas[i-1], false);
 		}
 
 		return total;
@@ -243,7 +245,6 @@
 
 	/* atualiza tabuleiro na tela - retorna o número de conflitos*/
 	function exibeEstado() {
-		
 		// muda posicao das rainhas
 		for (var i = 1; i <= rainhas.length; i++) {
 
@@ -254,7 +255,7 @@
 		
 		// atualiza variaveis de ataques das posicoes
 		$(".posicoes").each(function(){
-			var ataques = verificarValidade($(this).attr("id"));;
+			var ataques = verificarValidade($(this).attr("id"), false);
 			$(this).attr("ataques", ataques);
 		});
 
@@ -269,7 +270,6 @@
 	    
 		return retorno;
 	}
-
 	function comparaEstados(estado1,estado2) {	// compara estados
 		for (var i=0; i<estado1.length; i++)
 			if (estado1[i] != estado2[i])
@@ -278,8 +278,12 @@
 		return true;
 	}
 
-	/*inicializacao de variaveis para a busca iterativa da solucao*/
+	/* inicializacao de variaveis para a busca iterativa da solucao*/
 	function solucaoIA() {
+		$(".solucao").attr("disabled","disabled");
+		$(".parar").removeAttr("disabled");
+		parar = false;
+
 		// nome das divs q representam as rainhas
 		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
 
@@ -294,7 +298,7 @@
 					
 		passos = 0;
 		passosSemMudanca = 0;
-		anterior = [];
+		anterior = copiaEstado(rainhas);
 		melhoraIterativa(0);	// inicia o algoritmo de melhora iterativa, a partir da primeira coluna
 	}
 	
@@ -304,7 +308,7 @@ console.log("Passos:"+ passos);
 console.log("Passos sem mudança:"+passosSemMudanca);
 console.log("estado Ant:"+ anterior);
 console.log(i);
-console.log("rainhas" + rainhas);
+console.log("rainhas: " + rainhas);
 
 		var min;	// número mínimo de conflitos
 		var opcoes = [];	// array das posições com mínimo de conflitos
@@ -313,7 +317,6 @@ console.log("rainhas" + rainhas);
 		limpaConflitos();	// limpa nº de conflitos das células
 		
 		if (i == 0)	{
-		// 	document.getElementById("info").innerHTML = "";	// limpa a área de informação sempre que reinicia da coluna 0
 			if (passosSemMudanca > 24){	// cinco ciclos sem alterar o tabuleiro - possível estado de estagnação
 				if (confirm("Possível estagnação detectada!\n\nReiniciar usando o estado inicial?")) {
 					recomecar();	// limpa tabuleiro
@@ -328,8 +331,6 @@ console.log("rainhas" + rainhas);
 
 		if (exibeEstado()) {	// atualiza tabuleiro na tela - prossegue se ainda houver conflitos
 			passos++;
-			// // document.getElementById("passos").innerHTML = passos;
-			// // document.getElementById("info").innerHTML += "Checando coluna "+i;
 			conflitos = getAttrAtaques(rainhas[i]);
 
 			min = conflitos;		// inicializa número mínimo de conflitos
@@ -337,7 +338,6 @@ console.log("rainhas" + rainhas);
 			// percorre todas as celulas da linha i 
 			for (y = 0; y < 8; y++) {
 				var pos = i * 8 + (y + 1);
-				console.log("--" + pos);
 				conflitos = getAttrAtaques(pos);
 				if (conflitos < min) {	// se achou um menor número de conflitos
 					min = conflitos;	// atualiza mínimo
@@ -346,82 +346,32 @@ console.log("rainhas" + rainhas);
 					opcoes.push(pos);			// adiciona à lista de opções
 				}
 			}
+			console.log(opcoes);
 			y = Math.floor(Math.random()*opcoes.length); // escolhe uma das posições que tem o mínimo de conflitos
 			rainhas[i] = opcoes[y];	// reposiciona rainha desta linha
 
-			if (comparaEstados(rainhas,anterior))	// verifica se houve mudança no tabuleiro
+			if (comparaEstados(rainhas,anterior)) {	// verifica se houve mudança no tabuleiro
 				passosSemMudanca++;
-			else {
+			} else {
 				anterior = copiaEstado(rainhas);
 				passosSemMudanca = 0;
 			}
 			
 			exibeEstado();	// exibe tabuleiro atualizado
-			i = (i<7)?i+1:0;	// próxima coluna
-			window.setTimeout(function() { melhoraIterativa(i) }, 2000);  // nova iteração em n milissegundos
-		} else {	// se não há conflitos no tabuleiro, encontrou uma solução!
 			
-			alert("Solução encontrada!");
+			i = (i<7) ? i+1 : 0;	// próxima coluna
+			window.setTimeout(function() { 
+				if (!parar)	melhoraIterativa(i) 
+			}, 2000);  // nova iteração em n milissegundos
+		} else {	
+			// se não há conflitos no tabuleiro, encontrou uma solução!
+			alert("Solução encontrada, com "+passos+" passos");
 			limpaConflitos();
 		}
 	}
 
-	function solucaoIA2(){
-		//var arrayDiv = ['div2','div12','div22','div32','div35','div41','div55','div61'];
-		//var posicao = [57,58,59,60,61,62,63,64];
-		var arrayDrag = ["#drag1","#drag2","#drag3","#drag4","#drag5","#drag6","#drag7","#drag8"];
-		var arrayDiv = [];
-
-		$(".posicoes").each(function(){
-			var ataques = verificarValidade($(this).attr("id"));;
-			$(this).attr("ataques", ataques);
-		});
-
-		// percorre todas as rainhas
-		for (var i = arrayDrag.length - 1; i >= 0; i--) {
-			
-			var posicao = $(arrayDrag[i]).parent(".posicoes").attr("id");
-			posicao = parseInt(posicao.replace("div",""));
-			
-			var x = posicao + 8; 
-			var valor = $(arrayDrag[i]).parent(".posicoes").attr("ataques");
-			var pos = ["div" + x];
-
-			// vertical para baixo
-			while (x < 65) {
-				var ataque = $("#div"+x).attr("ataques");
-				if (valor > ataque) {
-					valor = ataque;
-					pos = ["div" + x];
-				} else if (valor == ataque) {
-					pos.push("div"+x);
-				}
-				x += 8;
-			}
-			
-			// vertical para cima
-			var x = posicao - 8; 
-			while (x > 0) {
-
-				var ataque = parseInt($("#div"+x).attr("ataques"));
-				if (valor > ataque) {
-					valor = ataque;
-					pos = ["div" + x];
-				} else if (valor == ataque) {
-					pos.push("div"+x);
-				}
-				x -= 8;
-			}
-			
-			var y = Math.floor(Math.random()*pos.length);
-			arrayDiv[i] = pos[y]; // escolhe umas posicao aleatoria das possibilidades de menor ataques da coluna
-			
-		    atualizaAtacava(arrayDrag[i].replace("#",""));
-		    
-			$("#" + pos[y]).append($(arrayDrag[i]));
-			$(arrayDrag[i]).attr("anterior", pos[y]);
-		}
-		
-		for (var i = arrayDiv.length - 1; i >= 0; i--) verificarValidade(arrayDiv[i]);
-
+	function stop(){
+		$(".solucao").removeAttr("disabled");
+		$(".parar").attr("disabled","disabled");
+		parar = true;
 	}

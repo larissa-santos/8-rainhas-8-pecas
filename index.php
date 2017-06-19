@@ -14,8 +14,9 @@
 <button class="comecar" onclick="recomecar()">Começar</button>
 
 <div class="jogo">
-	<button onclick="solucaoIA()">Solução</button>
-	<button onclick="recomecar()">Recomeçar</button>
+	<button class="solucao" onclick="solucaoIA()">Solução</button>
+	<button class="" onclick="recomecar()">Recomeçar</button>
+	<button class="parar" onclick="stop()" disabled >Parar</button>
 
 	<table class="tabuleiro">
 		<tr>
